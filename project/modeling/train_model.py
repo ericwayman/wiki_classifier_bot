@@ -21,7 +21,6 @@ RAW_DATA_TABLE = os.getenv('RAW_DATA_TABLE')
 REDIS_HOST=os.getenv('REDIS_HOST')
 REDIS_PORT=os.getenv('REDIS_PORT')
 
-
 def database_connection():
     connection = pg.connect(
                         "dbname='{db}' user='{u}' password = '{p}' host='{h}'".format
@@ -33,6 +32,7 @@ def database_connection():
                         )
                     )
     return connection
+
 
 def load_from_db_to_df(connection,table_with_schema):
     query = "SELECT * FROM {};".format(table_with_schema)
@@ -72,57 +72,13 @@ def initialize_tfidf():
     )
     return tfidf
 
-def vectorize_data(train):
+def vectorize_data(train,tfidf):
     '''
     Given the feature arrays train and test returns
     the tfidf vectorized arrays: X_train, X_test
     '''
-    #perform tfidf vectorization
-    tfidf = initialize_tfidf()
     X_train = tfidf.fit_transform(train)
     return X_train.toarray()
-
-def vectorize_train_test_data(train,test):
-    '''
-    Given the feature arrays train and test returns
-    the tfidf vectorized arrays: X_train, X_test
-    '''
-    
-    #perform tfidf vectorization
-    tfidf = initialize_tfidf()
-    X_train = tfidf.fit_transform(train)
-    X_test = tfidf.transform(test)
-    return X_train.toarray(), X_test.toarray()
-
-def score_kfold_cv(model,X,y,num_folds):
-    '''
-    Given a model and data trains the model and predicts using stratified k-fold
-    cross validation
-    '''
-    full_preds=[]
-    full_pred_probs=[]
-    full_scores=[]
-    full_labels=[]
-
-    cv_folds = StratifiedKFold(y=y,n_folds=num_folds,shuffle=True,random_state=1)
-    #train on k-1 fold and test on each remaining fold
-    for train_index, test_index in cv_folds:
-        X_train,X_test = vectorize_train_test_data(train=X[train_index],test=X[test_index])
-        y_train=y[train_index]
-        y_test = y[test_index]
-        model.fit(X_train,y_train)
-        
-        preds = model.predict(X_test)
-        pred_probs = model.predict_proba(X_test)
-        score = metrics.accuracy_score(y_true=y_test,y_pred =preds)
-        #score = np.mean([preds == y_test])
-
-        full_labels.extend(y_test)
-        full_preds.extend(preds)
-        full_pred_probs.extend(pred_probs)
-        full_scores.append(score)
-        
-    return full_labels, full_preds, full_pred_probs, full_scores
 
 def initialize_model(seed):
     from sklearn.ensemble import RandomForestClassifier
@@ -143,13 +99,13 @@ def main():
     table_with_schema = '{s}.{t}'.format(s=SCHEMA,t=RAW_DATA_TABLE)
     df = load_from_db_to_df(connection,table_with_schema)
     X,y = preprocess_data_frame(df)
-    X = vectorize_data(X)
+    tfidf = initialize_tfidf()
+    X = vectorize_data(X,tfidf)
     model = initialize_model(SEED)
     model.fit(X,y)
     r = redis.StrictRedis(host=REDIS_HOST,port=REDIS_PORT)
     save_model(model,r)
-    #full_labels, full_preds, full_pred_probs, full_scores = score_kfold_cv(model,X,y,NUM_FOLDS)
-    #print full_scores
+    r.set("tfidf",cPickle.dumps(tfidf,1))
 
 if __name__ == "__main__":
     main()
