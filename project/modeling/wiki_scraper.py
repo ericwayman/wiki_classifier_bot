@@ -87,7 +87,6 @@ class CategoryData:
             for link in links:
                 text_scraper = TextScraper('https://en.wikipedia.org'+link)
                 content = text_scraper.extract_text()
-                content = str.decode(content).encode('utf-8')
                 data.append((cat,content))
             print "added {} links of Data for category: {}".format(len(links),cat)
         self.data = data

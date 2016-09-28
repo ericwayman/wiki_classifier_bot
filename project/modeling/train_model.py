@@ -3,14 +3,13 @@ import os
 import psycopg2 as pg
 import redis
 from collections import defaultdict
-import cPickle as pickle
+import pickle
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cross_validation import StratifiedKFold
 from sklearn import metrics
 import redis
-import cPickle
 #environment variables
 SEED=1337
 NUM_FOLDS = 10
@@ -43,7 +42,7 @@ def load_from_db_to_df(connection,table_with_schema):
     return df
 
 def text_transforms(text,word_limit=3000):
-    text = text.decode("utf-8")
+    #text = text.decode("utf-8") #not needed in python 3
     text = text[:word_limit]
     return text
 
@@ -53,7 +52,7 @@ def preprocess_data_frame(df):
     duplicates = df.duplicated(subset="content",take_last=True)
     df = df[duplicates == False]
     new_len = df.shape[0]
-    print "dropped {} duplicates".format(old_len-new_len)
+    print("dropped {} duplicates".format(old_len-new_len))
     df = df.reset_index()
     #apply any text transformation- trimming, article, stemming words, etc...
     df['content'] = df['content'].apply(lambda x: text_transforms(text=x))
@@ -91,7 +90,7 @@ def initialize_model(seed):
 
 def save_model(model,redis):
     #save model to redis
-    redis.set("model",cPickle.dumps(model,1))
+    redis.set("model",pickle.dumps(model,1))
 
 
 def main():
@@ -105,7 +104,7 @@ def main():
     model.fit(X,y)
     r = redis.StrictRedis(host=REDIS_HOST,port=REDIS_PORT)
     save_model(model,r)
-    r.set("tfidf",cPickle.dumps(tfidf,1))
+    r.set("tfidf",pickle.dumps(tfidf,1))
 
 if __name__ == "__main__":
     main()
