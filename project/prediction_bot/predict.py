@@ -35,7 +35,9 @@ def score():
     tfidf = load_tfidf(r)
     x = transform_data(text,tfidf)
     #score
-    return str(model.predict(x)[0])
+    prediction = str(model.predict(x)[0])
+    print(prediction)
+    return prediction
 
 
 @app.route("/")
