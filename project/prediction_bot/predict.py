@@ -1,15 +1,23 @@
 from flask import Flask, request, jsonify
 import os
+import json
 import redis
 import pickle
 
-REDIS_HOST = os.getenv('REDIS_HOST')
-REDIS_PORT = os.getenv('REDIS_PORT')
 APP_PORT = int(os.getenv("APP_PORT"))
 DEBUG = bool(os.getenv("DEBUG"))
 
+if "VCAP_SERVICES" in os.environ:
+    services = json.loads(os.getenv("VCAP_SERVICES"))
+    redis_env = services["p-redis"][0]["credentials"]
+else:
+    REDIS_HOST=os.getenv('REDIS_HOST')
+    REDIS_PORT=os.getenv('REDIS_PORT')
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD',None)
+    redis_env = dict(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD)
+
+r = redis.StrictRedis(**redis_env)
 app = Flask(__name__)
-r = redis.StrictRedis(host=REDIS_HOST,port=REDIS_PORT)
 
 def load_model(redis):
     return pickle.loads(r['model'])
