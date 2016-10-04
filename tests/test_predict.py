@@ -3,17 +3,17 @@ import os
 import project.prediction_bot.predict as predict
 #pre python 3.3.  In new versions from unittest.mock import patch
 from mock import patch
-import cPickle
+import pickle
 import json
 
 def mock_load_model(redis=None):
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/random_forest.p")
-    model = cPickle.load(open(model_path,"rb"))
+    model = pickle.load(open(model_path,"rb"))
     return model
 
 def mock_load_tfidf(redis=None):
     tfidf_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/tfidf.p")
-    tfidf = cPickle.load(open(tfidf_path,"rb"))
+    tfidf = pickle.load(open(tfidf_path,"rb"))
     return tfidf
 
 @patch("project.prediction_bot.predict.load_tfidf", mock_load_tfidf)
