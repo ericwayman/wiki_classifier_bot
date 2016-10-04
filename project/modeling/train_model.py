@@ -19,6 +19,7 @@ SCHEMA = os.getenv('SCHEMA')
 RAW_DATA_TABLE = os.getenv('RAW_DATA_TABLE')
 REDIS_HOST=os.getenv('REDIS_HOST')
 REDIS_PORT=os.getenv('REDIS_PORT')
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD',None)
 
 def database_connection():
     connection = pg.connect(
@@ -92,6 +93,16 @@ def save_model(model,redis):
     #save model to redis
     redis.set("model",pickle.dumps(model,1))
 
+def load_redis(REDIS_HOST,REDIS_PORT,REDIS_PASSWORD=None):
+    if REDIS_PASSWORD == None:
+        r = redis.StrictRedis(host=REDIS_HOST,port=REDIS_PORT)
+    else:
+        r = redis.StrictRedis(
+                        host=REDIS_HOST,
+                        port=REDIS_PORT,
+                        password=REDIS_PASSWORD
+                        )
+    return r
 
 def main():
     connection = database_connection()
@@ -102,7 +113,7 @@ def main():
     X = vectorize_data(X,tfidf)
     model = initialize_model(SEED)
     model.fit(X,y)
-    r = redis.StrictRedis(host=REDIS_HOST,port=REDIS_PORT)
+    r = load_redis(REDIS_HOST,REDIS_PORT,REDIS_PASSWORD)
     save_model(model,r)
     r.set("tfidf",pickle.dumps(tfidf,1))
 
