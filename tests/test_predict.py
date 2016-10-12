@@ -38,4 +38,5 @@ class TestPredictApp(unittest.TestCase):
         """Test that the right prediction is returned"""
         text = """Non-linear machine learning classification algorithm."""
         results = self.app.post("score",data=json.dumps({"text":text}))
-        self.assertEqual(results.get_data(as_text=True),"Machine_learning_algorithms")
+        prediction = '{\n  "prediction": "Machine_learning_algorithms"\n}\n'
+        self.assertEqual(results.get_data(as_text=True),prediction)
