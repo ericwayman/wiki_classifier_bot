@@ -4,8 +4,8 @@ import json
 import redis
 import pickle
 
-APP_PORT = int(os.getenv("APP_PORT"))
-DEBUG = bool(os.getenv("DEBUG"))
+PORT = int(os.getenv("PORT"))
+DEBUG = (os.getenv("DEBUG")=='True')
 
 if "VCAP_SERVICES" in os.environ:
     services = json.loads(os.getenv("VCAP_SERVICES"))
@@ -45,7 +45,7 @@ def score():
     #score
     prediction = str(model.predict(x)[0])
     print(prediction)
-    return prediction
+    return jsonify({'prediction':prediction})
 
 
 @app.route("/")
@@ -53,4 +53,14 @@ def main():
     return "Hello World!"
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=APP_PORT,debug=DEBUG)
+    app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
+    # app.run(host='0.0.0.0', port=APP_PORT,debug=DEBUG)
+
+# if os.environ.get('VCAP_SERVICES') is None: # running locally
+#     PORT = 8080
+#     DEBUG = True
+# else:                                       # running on CF
+#     PORT = int(os.getenv("PORT"))
+#     DEBUG = False
+
+# app.run(host='0.0.0.0', port=PORT, debug=DEBUG)

@@ -1,0 +1,11 @@
+---
+applications:
+- name: wiki_predict
+  memory: 1GB
+  disk_quota: 2GB
+  instances: 1
+  random-route: false
+  buildpack: https://github.com/cloudfoundry/python-buildpack
+  command: python predict.py
+  services:
+    - test_redis
